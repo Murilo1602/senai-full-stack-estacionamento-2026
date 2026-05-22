@@ -1,171 +1,117 @@
-const API = 'http://localhost:3000'
+const urlAuto = 'http://localhost:3000/automovel';
+const urlEstadia = 'http://localhost:3000/estadia';
 
-function showSection(id) {
-    document.querySelectorAll('section').forEach(s => s.classList.remove('active'))
-    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'))
-    document.getElementById(id).classList.add('active')
-    event.target.classList.add('active')
-    if (id === 'veiculos') carregarVeiculos()
-    if (id === 'estadias') { carregarVeiculos(); carregarEstadias() }
+carregarDados();
+
+function carregarDados() {
+    fetch(urlAuto + '/listar').then(res => res.json()).then(data => listarAutomoveis(data));
+    fetch(urlEstadia + '/listar').then(res => res.json()).then(data => listarEstadias(data));
 }
 
-function showMsg(elId, texto, tipo) {
-    const el = document.getElementById(elId)
-    el.innerHTML = `<div class="msg msg-${tipo}">${texto}</div>`
-    setTimeout(() => el.innerHTML = '', 3000)
+function listarAutomoveis(lista) {
+    const cont = document.getElementById('automoveis-container');
+    cont.innerHTML = '';
+    lista.forEach(a => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+            <h3>${a.placa}</h3>
+            <p><strong>Dono:</strong> ${a.proprietario}</p>
+            <p><strong>Marca/Modelo:</strong> ${a.marca} ${a.modelo}</p>
+            <p><strong>Tipo:</strong> ${a.tipo} | <strong>Ano:</strong> ${a.ano}</p>
+            <button onclick="excluirAuto('${a.placa}')" style="background:#ff4d4d; color:white; border:none; padding:5px; border-radius:5px; margin-top:10px; cursor:pointer;">Excluir</button>
+        `;
+        cont.appendChild(card);
+    });
 }
 
-function formatData(d) {
-    if (!d) return '—'
-    return new Date(d).toLocaleString('pt-BR')
+function listarEstadias(lista) {
+    const cont = document.getElementById('estadias-container');
+    cont.innerHTML = '';
+    lista.forEach(e => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        if (e.saida) card.style.background = "#2d5a88";
+
+        card.innerHTML = `
+            <h3>Placa: ${e.placa}</h3>
+            <p>Entrada: ${new Date(e.entrada).toLocaleString()}</p>
+            ${e.saida ? `<p>Saída: ${new Date(e.saida).toLocaleString()}</p><h4>Total: R$ ${e.valorTotal}</h4>` : `<p><b>STATUS: ATIVO</b></p>`}
+            
+            <div style="margin-top:15px; display:flex; gap:10px;">
+                ${!e.saida ? `<button onclick="finalizarEstadiaId(${e.id})" style="background:#28a745; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; flex:1;">Finalizar</button>` : ''}
+                <button onclick="excluirEstadiaId(${e.id})" style="background:#dc3545; color:white; border:none; padding:8px; border-radius:5px; cursor:pointer; flex:1;">Excluir</button>
+            </div>
+        `;
+        cont.appendChild(card);
+    });
 }
 
+function cadastrarAutomovel(event) {
+    event.preventDefault();
+    
+    const dados = {
+        placa: document.getElementById('placa').value,
+        proprietario: document.getElementById('proprietario').value,
+        tipo: document.getElementById('tipo').value,
+        modelo: document.getElementById('modelo').value,
+        marca: document.getElementById('marca').value,
+        cor: document.getElementById('cor').value,
+        ano: Number(document.getElementById('ano').value), 
+        telefone: document.getElementById('telefone').value
+    };
 
-async function carregarVeiculos() {
-    const res = await fetch(`${API}/veiculos`)
-    const veiculos = await res.json()
-    const tbody = document.getElementById('tabela-veiculos')
-    const select = document.getElementById('e-veiculoId')
-
-    tbody.innerHTML = veiculos.map(v => `
-      <tr>
-        <td>${v.id}</td>
-        <td><strong>${v.placa}</strong></td>
-        <td>${v.modelo}</td>
-        <td>${v.cor || '—'}</td>
-        <td>${v.ano || '—'}</td>
-        <td>${v.estadias.length}</td>
-        <td class="actions">
-          <button class="btn btn-warning" onclick="editarVeiculo(${v.id},'${v.placa}','${v.modelo}','${v.cor || ''}','${v.ano || ''}')">Editar</button>
-          <button class="btn btn-danger" onclick="deletarVeiculo(${v.id})">Excluir</button>
-        </td>
-      </tr>
-    `).join('')
-
-    select.innerHTML = veiculos.map(v =>
-        `<option value="${v.id}">${v.placa} - ${v.modelo}</option>`
-    ).join('')
+    fetch(urlAuto + '/cadastrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+    })
+    .then(res => {
+        if (!res.ok) throw new Error("Erro ao salvar veículo");
+        fecharModais();
+        carregarDados();
+    })
+    .catch(err => alert(err.message));
 }
 
-function editarVeiculo(id, placa, modelo, cor, ano) {
-    document.getElementById('v-id').value = id
-    document.getElementById('v-placa').value = placa
-    document.getElementById('v-modelo').value = modelo
-    document.getElementById('v-cor').value = cor
-    document.getElementById('v-ano').value = ano
-    document.getElementById('form-veiculo-titulo').textContent = 'Editar Veículo'
+function cadastrarEstadia(event) {
+    event.preventDefault();
+    const dados = {
+        placa: document.getElementById('estadia-placa').value,
+        valorHora: Number(document.getElementById('valorHora').value)
+    };
+    fetch(urlEstadia + '/cadastrar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dados)
+    }).then(() => { fecharModais(); carregarDados(); });
 }
 
-function cancelarVeiculo() {
-    document.getElementById('v-id').value = ''
-    document.getElementById('v-placa').value = ''
-    document.getElementById('v-modelo').value = ''
-    document.getElementById('v-cor').value = ''
-    document.getElementById('v-ano').value = ''
-    document.getElementById('form-veiculo-titulo').textContent = 'Cadastrar Veículo'
+function finalizarEstadiaId(id) {
+    fetch(urlEstadia + '/atualizar/' + id, { method: 'PUT' }).then(() => carregarDados());
 }
 
-async function salvarVeiculo() {
-    const id = document.getElementById('v-id').value
-    const body = {
-        placa: document.getElementById('v-placa').value,
-        modelo: document.getElementById('v-modelo').value,
-        cor: document.getElementById('v-cor').value,
-        ano: document.getElementById('v-ano').value
-    }
-    if (!body.placa || !body.modelo) return showMsg('msg-veiculo', 'Placa e Modelo são obrigatórios!', 'error')
-
-    const url = id ? `${API}/veiculos/${id}` : `${API}/veiculos`
-    const method = id ? 'PUT' : 'POST'
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-
-    if (res.ok) {
-        showMsg('msg-veiculo', id ? 'Veículo atualizado!' : 'Veículo cadastrado!', 'success')
-        cancelarVeiculo()
-        carregarVeiculos()
-    } else {
-        const err = await res.json()
-        showMsg('msg-veiculo', 'Erro: ' + err.erro, 'error')
-    }
+function excluirEstadiaId(id) {
+    if(!confirm("Excluir estadia?")) return;
+    fetch(urlEstadia + '/excluir/' + id, { method: 'DELETE' }).then(() => carregarDados());
 }
 
-async function deletarVeiculo(id) {
-    if (!confirm('Deseja excluir este veículo?')) return
-    const res = await fetch(`${API}/veiculos/${id}`, { method: 'DELETE' })
-    if (res.ok) { showMsg('msg-veiculo', 'Veículo excluído!', 'success'); carregarVeiculos() }
-    else showMsg('msg-veiculo', 'Erro ao excluir (veículo pode ter estadias).', 'error')
+function excluirAuto(placa) {
+    if(!confirm("Excluir veículo?")) return;
+    fetch(urlAuto + '/excluir/' + placa, { method: 'DELETE' }).then(() => carregarDados());
 }
 
-
-async function carregarEstadias() {
-    const res = await fetch(`${API}/estadias`)
-    const estadias = await res.json()
-    const tbody = document.getElementById('tabela-estadias')
-
-    tbody.innerHTML = estadias.map(e => `
-      <tr>
-        <td>${e.id}</td>
-        <td>${e.veiculo.placa} - ${e.veiculo.modelo}</td>
-        <td>${formatData(e.entrada)}</td>
-        <td>${formatData(e.saida)}</td>
-        <td>R$ ${e.valorHora.toFixed(2)}</td>
-        <td>${e.valorTotal != null ? 'R$ ' + e.valorTotal.toFixed(2) : '—'}</td>
-        <td>
-          ${e.saida
-            ? '<span class="badge badge-green">Saiu</span>'
-            : '<span class="badge badge-yellow">No pátio</span>'}
-        </td>
-        <td class="actions">
-          <button class="btn btn-warning" onclick="editarEstadia(${e.id}, ${e.valorHora})">Editar</button>
-          <button class="btn btn-danger" onclick="deletarEstadia(${e.id})">Excluir</button>
-        </td>
-      </tr>
-    `).join('')
+function abrirCadastroAuto() {
+    document.getElementById('modalAuto').style.display = 'flex';
+    document.querySelector('#modalAuto form').reset();
 }
 
-function editarEstadia(id, valorHora) {
-    document.getElementById('e-id').value = id
-    document.getElementById('e-valorHora').value = valorHora
-    document.getElementById('e-saida-label').style.display = 'flex'
-    document.getElementById('form-estadia-titulo').textContent = 'Registrar Saída / Editar Estadia'
+function abrirCadastroEstadia() {
+    document.getElementById('modalEstadia').style.display = 'flex';
+    document.querySelector('#modalEstadia form').reset();
 }
 
-function cancelarEstadia() {
-    document.getElementById('e-id').value = ''
-    document.getElementById('e-valorHora').value = ''
-    document.getElementById('e-saida').value = ''
-    document.getElementById('e-saida-label').style.display = 'none'
-    document.getElementById('form-estadia-titulo').textContent = 'Registrar Entrada'
+function fecharModais() {
+    document.getElementById('modalAuto').style.display = 'none';
+    document.getElementById('modalEstadia').style.display = 'none';
 }
-
-async function salvarEstadia() {
-    const id = document.getElementById('e-id').value
-    const body = {
-        veiculoId: document.getElementById('e-veiculoId').value,
-        valorHora: document.getElementById('e-valorHora').value,
-        saida: document.getElementById('e-saida').value || undefined
-    }
-    if (!body.valorHora) return showMsg('msg-estadia', 'Valor por hora é obrigatório!', 'error')
-
-    const url = id ? `${API}/estadias/${id}` : `${API}/estadias`
-    const method = id ? 'PUT' : 'POST'
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
-
-    if (res.ok) {
-        showMsg('msg-estadia', id ? 'Estadia atualizada!' : 'Entrada registrada!', 'success')
-        cancelarEstadia()
-        carregarEstadias()
-    } else {
-        const err = await res.json()
-        showMsg('msg-estadia', 'Erro: ' + err.erro, 'error')
-    }
-}
-
-async function deletarEstadia(id) {
-    if (!confirm('Deseja excluir esta estadia?')) return
-    const res = await fetch(`${API}/estadias/${id}`, { method: 'DELETE' })
-    if (res.ok) { showMsg('msg-estadia', 'Estadia excluída!', 'success'); carregarEstadias() }
-    else showMsg('msg-estadia', 'Erro ao excluir.', 'error')
-}
-
-carregarVeiculos()

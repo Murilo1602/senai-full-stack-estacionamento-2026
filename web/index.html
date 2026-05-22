@@ -1,94 +1,58 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Estacionamento MLC</title>
-   <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <title>Sistema de Estacionamento</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-<header>
-  <h1> Estacionamento MLC</h1>
-</header>
-
-<nav>
-  <button class="active" onclick="showSection('veiculos')">Veículos</button>
-  <button onclick="showSection('estadias')">Estadias</button>
-</nav>
-
-<main>
-  <section id="veiculos" class="active">
-    <h2>Gerenciar Veículos</h2>
-
-    <div id="msg-veiculo"></div>
-
-    <div class="card">
-      <h3 id="form-veiculo-titulo" style="margin-bottom:12px">Cadastrar Veículo</h3>
-      <div class="form-grid">
-        <label>Placa *
-          <input id="v-placa" placeholder="ABC-1234" />
-        </label>
-        <label>Modelo *
-          <input id="v-modelo" placeholder="Gol, Civic..." />
-        </label>
-        <label>Cor
-          <input id="v-cor" placeholder="Branco" />
-        </label>
-        <label>Ano
-          <input id="v-ano" type="number" placeholder="2020" />
-        </label>
-      </div>
-      <input type="hidden" id="v-id" />
-      <button class="btn btn-primary" onclick="salvarVeiculo()">Salvar</button>
-      <button class="btn" style="background:#aaa;color:white;margin-left:8px" onclick="cancelarVeiculo()">Cancelar</button>
+    <header>
+        <button onclick="carregarDados()">Atualizar</button>
+        <button onclick="abrirCadastroAuto()">Novo Veículo</button>
+        <button onclick="abrirCadastroEstadia()">Nova Estadia</button>
+    </header>
+    <main>
+        <h1 class="titulo">Veículos</h1>
+        <div id="automoveis-container" class="container"></div>
+        <hr>
+        <h1 class="titulo">Estadias</h1>
+        <div id="estadias-container" class="container"></div>
+    </main>
+    <div id="modalAuto" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Cadastro de Veículo</h2>
+            <form onsubmit="cadastrarAutomovel(event)">
+                <input type="text" id="placa" placeholder="Placa" required>
+                <input type="text" id="proprietario" placeholder="Proprietário " required>
+                <input type="text" id="tipo" placeholder="Tipo" required>
+                <input type="text" id="modelo" placeholder="Modelo" required>
+                <input type="text" id="marca" placeholder="Marca" required>
+                <input type="text" id="cor" placeholder="Cor" required>
+                <input type="number" id="ano" placeholder="Ano" required>
+                <input type="text" id="telefone" placeholder="Telefone" required>
+                <div class="botoes">
+                    <button type="submit" style="background: #28a745;">Salvar Veículo</button>
+                    <button type="button" onclick="fecharModais()" class="btn-cancelar">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div id="modalEstadia" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Registrar Entrada</h2>
+            <form onsubmit="cadastrarEstadia(event)">
+                <input type="text" id="estadia-placa" placeholder="Placa do Carro" required>
+                <input type="number" id="valorHora" placeholder="Valor Hora (R$)" required>
+                <div class="botoes">
+                    <button type="submit" style="background: #28a745;">Iniciar Estadia</button>
+                    <button type="button" onclick="fecharModais()" class="btn-cancelar">Voltar</button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="card">
-      <h3 style="margin-bottom:12px">Veículos Cadastrados</h3>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Placa</th><th>Modelo</th><th>Cor</th><th>Ano</th><th>Estadias</th><th>Ações</th></tr>
-        </thead>
-        <tbody id="tabela-veiculos"></tbody>
-      </table>
-    </div>
-  </section>
+    <script src="script.js"></script>
 
-  <section id="estadias">
-    <h2>Gerenciar Estadias</h2>
-
-    <div id="msg-estadia"></div>
-
-    <div class="card">
-      <h3 id="form-estadia-titulo" style="margin-bottom:12px">Registrar Entrada</h3>
-      <div class="form-grid">
-        <label>Veículo *
-          <select id="e-veiculoId"></select>
-        </label>
-        <label>Valor por Hora (R$) *
-          <input id="e-valorHora" type="number" step="0.01" placeholder="10.00" />
-        </label>
-        <label id="e-saida-label" style="display:none">Saída
-          <input id="e-saida" type="datetime-local" />
-        </label>
-      </div>
-      <input type="hidden" id="e-id" />
-      <button class="btn btn-primary" onclick="salvarEstadia()">Salvar</button>
-      <button class="btn" style="background:#aaa;color:white;margin-left:8px" onclick="cancelarEstadia()">Cancelar</button>
-    </div>
-
-    <div class="card">
-      <h3 style="margin-bottom:12px">Estadias Registradas</h3>
-      <table>
-        <thead>
-          <tr><th>ID</th><th>Veículo</th><th>Entrada</th><th>Saída</th><th>R$/Hora</th><th>Total</th><th>Status</th><th>Ações</th></tr>
-        </thead>
-        <tbody id="tabela-estadias"></tbody>
-      </table>
-    </div>
-  </section>
-</main>
-<script src="script.js"></script>
 </body>
+
 </html>
